@@ -13,5 +13,9 @@ urlpatterns = [
 
     # Course
     path('course', views.course, name='course'),
-    path('course/create', views.create_course, name="create_course")
+    path('course/create', views.create_course, name="create_course"),
+
+    # Document
+    path('document', views.document, name='document'),
+    path('document/upload', views.upload_document, name="upload_document"),
 ]

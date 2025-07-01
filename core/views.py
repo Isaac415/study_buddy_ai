@@ -1,12 +1,19 @@
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.models import User
-from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-from .models import Course
+from .models import Course, Document
+import os
+from django.conf import settings
+from supabase import create_client
+from dotenv import load_dotenv
+import time
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+import json
+
 
 # Create your views here.
-
 '''
 Basic
 '''
@@ -68,6 +75,7 @@ def register(request):
     return render(request, 'register.html')
 
 # Logout
+@login_required
 def logout(request):
     auth.logout(request)
     return redirect('/')
@@ -83,6 +91,7 @@ def course(request):
     }
     return render(request, 'course.html', context)
 
+@login_required
 def create_course(request):
     if request.method == 'POST':
         name = request.POST['name'].strip()
@@ -102,3 +111,83 @@ def create_course(request):
 '''
 Document
 '''
+@login_required
+def document(request):
+    courses = Course.objects.filter(user=request.user)
+    documents = Document.objects.filter(user=request.user)
+    context = {
+        'courses': courses,
+        'documents': documents
+    }
+    return render(request, 'document.html', context)
+
+def supabase_client():
+    load_dotenv()
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    supabase = create_client(url, key)
+
+    return supabase
+
+def create_embedding(text: str):
+    supabase = supabase_client()
+    response = supabase.functions.invoke("create-embedding", 
+                                    invoke_options={"body": {"text": text}})
+    embedding = json.loads(response.decode('utf-8'))
+    
+    return embedding
+
+@login_required
+def upload_document(request):
+    if request.method == 'POST':
+        description = request.POST['description'].strip()
+        course = request.POST['course']
+        file = request.FILES.get('file')
+
+        # Save file to local temp
+        temp_dir = os.path.join(settings.BASE_DIR, 'temp')
+        filename = f"{request.user.username}_{file.name}"
+        local_file_path = os.path.join(temp_dir, filename)
+
+        with open(local_file_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        
+        # Save to Supabase
+        supabase = supabase_client()
+        supabase_path = f"{request.user.username}/{int(time.time())}_{file.name}"
+        file.seek(0)
+        file_data = file.read()
+        supabase_res = supabase.storage.from_('user-uploads').upload(supabase_path, file_data)
+
+        # Save a Document record to database
+        course_obj = Course.objects.get(user=request.user, name=course)
+        document = Document(description=description,
+                            original_filename=file.name,
+                            user=request.user,
+                            course=course_obj,
+                            url=supabase_res.path)
+        document.save()
+
+        # Load, split, create embeddings, and save to vector store
+        pdf_loader = PyPDFLoader(local_file_path)
+        pages = pdf_loader.load()
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=512,
+            chunk_overlap=128,
+        )
+        pages_split = text_splitter.split_documents(pages)
+
+        for part in pages_split:
+            embedding = create_embedding(part.page_content)
+            supabase.table("vector-store").insert({
+                "chunk": part.page_content,
+                "embedding": embedding,
+                "document_id": document.id,
+                "user_id": request.user.id,
+            }).execute()
+
+        # Delete local temp file
+        os.remove(local_file_path)
+
+        return redirect('/document')

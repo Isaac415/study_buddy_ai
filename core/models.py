@@ -11,7 +11,6 @@ class Course(models.Model):
         ('yellow', 'Yellow'),
     ]
     
-    # Fields
     id = models.CharField(primary_key=True, default=generate, editable=False)
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=200, default="No course description")
@@ -24,7 +23,9 @@ class Course(models.Model):
 
 class Document(models.Model):
     id = models.CharField(primary_key=True, default=generate, editable=False)
-    name = models.CharField(max_length=150)
+    original_filename = models.CharField(max_length=200, default="file")
+    description = models.CharField(max_length=200, default="No course description")
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     course = models.ForeignKey('Course', on_delete=models.CASCADE)
     url = models.URLField()
     created_date = models.DateTimeField(auto_now_add=True)
