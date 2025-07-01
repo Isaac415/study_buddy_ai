@@ -3,8 +3,13 @@ from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
+from .models import Course
 
 # Create your views here.
+
+'''
+Basic
+'''
 
 # Landing page
 def landing(request):
@@ -13,8 +18,15 @@ def landing(request):
 # Homepage after logged in
 @login_required
 def home(request):
-    return HttpResponse(f"<h1>Hi, {request.user}!</h1>")
+    context = {
+        "user": request.user
+    }
+    return render(request, 'home.html', context)
 
+
+'''
+Authentication
+'''
 # Login
 def login(request):
     if request.method == 'POST':
@@ -59,3 +71,30 @@ def register(request):
 def logout(request):
     auth.logout(request)
     return redirect('/')
+
+'''
+Course
+'''
+@login_required
+def course(request):
+    courses = Course.objects.filter(user=request.user)
+    context = {
+        'courses': courses
+    }
+    return render(request, 'course.html', context)
+
+def create_course(request):
+    if request.method == 'POST':
+        name = request.POST['name'].strip()
+        description = request.POST['description'].strip()
+        color = request.POST['color']
+
+        # Create course and save to database
+        course = Course(name=name,
+                        description=description,
+                        user=request.user,
+                        color=color,
+                        )
+        course.save()
+
+        return redirect('/course')
