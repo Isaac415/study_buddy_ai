@@ -2,18 +2,35 @@ from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
-# homepage after logged in
+# Landing page
+def landing(request):
+    return HttpResponse(f'<h1 style="text-align:center;">Welcome to Study Buddy AI!</h1>')
+
+# Homepage after logged in
+@login_required
 def home(request):
     return HttpResponse(f"<h1>Hi, {request.user}!</h1>")
 
-# login
+# Login
 def login(request):
-    return 
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = auth.authenticate(request, username=username, password=password)
+        if user is not None:
+            auth.login(request, user)
+            return redirect('/home')
+        else:
+            error_message = 'Invalid username or password'
+            return render(request, 'login.html', {'error_message': error_message})
+    else:
+        return render(request, 'login.html')
 
-# register
+# Register
 def register(request):
     # Register Form
     if request.method == 'POST':
@@ -38,4 +55,7 @@ def register(request):
     # Load Page
     return render(request, 'register.html')
 
-# logout
+# Logout
+def logout(request):
+    auth.logout(request)
+    return redirect('/')
