@@ -12,16 +12,16 @@ Basic
 '''
 
 # Landing page
-def landing(request):
-    return HttpResponse(f'<h1 style="text-align:center;">Welcome to Study Buddy AI!</h1>')
+def home(request):
+    return render(request, 'landing.html')
 
 # Homepage after logged in
 @login_required
-def home(request):
+def dashboard(request):
     context = {
         "user": request.user
     }
-    return render(request, 'home.html', context)
+    return render(request, 'dashboard.html', context)
 
 
 '''
@@ -35,7 +35,7 @@ def login(request):
         user = auth.authenticate(request, username=username, password=password)
         if user is not None:
             auth.login(request, user)
-            return redirect('/home')
+            return redirect('/dashboard')
         else:
             error_message = 'Invalid username or password'
             return render(request, 'login.html', {'error_message': error_message})
@@ -56,7 +56,7 @@ def register(request):
                 user = User.objects.create_user(username, email, password)
                 user.save()
                 auth.login(request, user)
-                return redirect('/home')
+                return redirect('/dashboard')
             except Exception as e:
                 error_message = f'Error creating account: {str(e)}'
                 return render(request, 'register.html', {'error_message': error_message})
@@ -98,3 +98,7 @@ def create_course(request):
         course.save()
 
         return redirect('/course')
+
+'''
+Document
+'''
