@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% load markdownify %}
-
 {% block title %}Chat: {{ chat_id }}{% endblock %}
 
 {% block content %}
@@ -80,11 +78,11 @@
             {% for message in messages %}
                 {% if message.role == 'human' %}
                     <li class="user-message">
-                        <h6>{{ message.content|markdownify}}</h6>
+                        <h6>{{ message.content }}</h6>
                     </li>
                 {% elif message.role == 'ai' %}
                     <li class="ai-message">
-                        <h6>{{ message.content|markdownify }}</h6>
+                        <h6>{{ message.content }}</h6>
                     </li>
                 {% endif %}
             {% endfor %}
@@ -103,6 +101,12 @@
     const messageList = document.getElementById("chat");
     const messageForm = document.getElementById("message-form");
     const messageInput = document.getElementById("message-input");
+    const messageSend = document.getElementById("message-send");
+    
+    // Scroll to bottom on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        messageList.scrollTop = messageList.scrollHeight;
+    });
     
     messageForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -122,6 +126,8 @@
         messageList.scrollTop = messageList.scrollHeight;
 
         messageInput.value = '';
+        messageInput.disabled = true;
+        messageSend.disabled = true;
 
         // Send message to backend
         fetch('', {
@@ -141,6 +147,9 @@
 
                 messageList.appendChild(aiMessageItem);
                 messageList.scrollTop = messageList.scrollHeight;
+                messageInput.disabled = false;
+                messageSend.disabled = false;
+                messageInput.focus();
             })
     });
 
