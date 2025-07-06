@@ -3,12 +3,8 @@ from django.http import JsonResponse
 from .models import Chat, Message
 from core.models import Course
 from django.contrib.auth.decorators import login_required
-from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage, ToolMessage
-from operator import add as add_messages
-from typing import TypedDict, Annotated, Sequence
-
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
 from .study_buddy_ai import create_agent
-
 
 # Create your views here.
 
@@ -64,24 +60,22 @@ def convert_message(messages):
 @login_required
 def chatroom(request, chat_id):
     # Load original chat
-    chat = Chat.objects.get(id=chat_id)
+    chat = Chat.objects.get(id=chat_id, user=request.user)
     messages = Message.objects.filter(chat=chat).order_by('created_at')
-    existing_messages = convert_message(messages)
 
-    class AgentState(TypedDict):
-        messages: Annotated[Sequence[BaseMessage], add_messages]
-    
-    agent = create_agent()
-
-
-
-    '''
     if request.method == "POST":
-        user_message = request.POST.get("message") + " DO NOT USE MARKDOWN!";
-        response = llm.invoke([HumanMessage(content=user_message)])
-        return JsonResponse({'response': response.content})
-    '''
+        existing_messages = convert_message(messages)
+        agent = create_agent()
+        user_message = request.POST["message"]
+        new_state = agent.invoke({"messages": existing_messages + [HumanMessage(content=user_message)]})
+        ai_message = new_state['messages'][-1].content
 
+        # Save to database
+        Message.objects.create(chat=chat, role="human", content=user_message)
+        Message.objects.create(chat=chat, role="ai", content=ai_message)
+
+        return JsonResponse({"response": ai_message})
+    
     context = {
         'chat_id': chat_id,
         'messages': messages,

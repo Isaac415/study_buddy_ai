@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load markdownify %}
+
 {% block title %}Chat: {{ chat_id }}{% endblock %}
 
 {% block content %}
@@ -17,7 +19,6 @@
             list-style: none;
             max-width: 80%;
             text-wrap: wrap;
-
         }
 
         .user-message {
@@ -79,11 +80,11 @@
             {% for message in messages %}
                 {% if message.role == 'human' %}
                     <li class="user-message">
-                        <h6>{{ message.content }}</h6>
+                        <h6>{{ message.content|markdownify}}</h6>
                     </li>
                 {% elif message.role == 'ai' %}
                     <li class="ai-message">
-                        <h6>{{ message.content }}</h6>
+                        <h6>{{ message.content|markdownify }}</h6>
                     </li>
                 {% endif %}
             {% endfor %}
@@ -112,7 +113,7 @@
         return;
         }
 
-        // Display immediate in chat
+        // Display immediately in chat
         const messageItem = document.createElement('li');
         messageItem.classList.add("user-message");
         messageItem.innerHTML = `<h6>${message}</h6>`;
