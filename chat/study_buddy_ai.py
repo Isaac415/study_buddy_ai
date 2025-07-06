@@ -32,4 +32,3 @@ def create_agent():
     agent = graph.compile()
 
     return agent
-
