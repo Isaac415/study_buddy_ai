@@ -15,7 +15,6 @@ def create_embeddings(text):
     response = supabase.functions.invoke("create-embedding", 
                                         invoke_options={"body": {"text": text}})
 
-
     embedding = json.loads(response.decode('utf-8'))
 
     return embedding
@@ -30,9 +29,10 @@ def similarity_search(query_text, document_text_id, top_k=3):
             "document_text_id": document_text_id,
         }
     ).execute()
+    
     return response.data
 
 # Example usage:
 response = similarity_search('What did Juvenal mean by "bread and circuses"?', document_text_id="lZkDyCnng8Z-UpgUManex", top_k=3)
 
-print(response)
+print(response[0]['chunk'])
