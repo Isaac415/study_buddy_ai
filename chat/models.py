@@ -1,3 +1,31 @@
 from django.db import models
+from nanoid import generate
 
 # Create your models here.
+class Chat(models.Model):
+    id = models.CharField(primary_key=True, default=generate, editable=False)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    course = models.ForeignKey('core.Course', on_delete=models.CASCADE)
+    document = models.ForeignKey('core.Document', on_delete=models.CASCADE)
+    title = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class Message(models.Model):
+    ROLE_OPTIONS = [
+        ('system','system'),
+        ('human', 'human'),
+        ('ai', 'ai'),
+        ('tool', 'tool'),
+    ]
+
+    id = models.CharField(primary_key=True, default=generate, editable=False)
+    role = models.CharField(max_length=20, choices=ROLE_OPTIONS, default="human")
+    content = models.CharField(max_length=1000, null=True, blank=True)
+    chat = models.ForeignKey('Chat', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.content

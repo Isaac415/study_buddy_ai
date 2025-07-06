@@ -4,29 +4,34 @@
 
 {% block content %}
 <div style="width: 55%; margin: 0 auto; min-height: 80vh; position: relative;">
-    <h1 style="text-align:center;">Main Chat App</h1>
+    <h2 style="text-align:center;">Main Chat App</h2>
 
     <style>
         .ai-message {
             background-color: #f0f0f0;
             border-radius: 15px;
             padding: 10px 15px;
-            margin: 10px 0;
+            margin: 15px 0;
             padding-bottom: 3px;
             width: fit-content;
             list-style: none;
+            max-width: 80%;
+            text-wrap: wrap;
+
         }
 
         .user-message {
             background-color: #f0f0f0;
             border-radius: 15px;
             padding: 10px 15px;
-            margin: 10px 0;
+            margin: 15px 0;
             padding-bottom: 3px;
             width: fit-content;
             margin-left: auto; 
             margin-right: 15px;
             list-style: none;
+            max-width: 80%;
+            text-wrap: wrap;
         }
         
         .chat h6 {
@@ -71,21 +76,68 @@
 
     <div id="chatroom">
         <ul id="chat">
-            <li class="ai-message">
+            <li class="user-message">
                 <h6>This is the first message.</h6>
             </li>
-            <li class="user-message">
+            <li class="ai-message">
                 <h6>This is the second message.</h6>
             </li>
         </ul>
         <div id="chatbox">
-            <form>
+            <form id="message-form" method="post">
+                {% csrf_token %}
                 <input id="message-input" type="text">
-                <input id="send" type="button" value="Send">
+                <input id="message-send" type="button" value="Send">
             </form>
         </div>
     </div>
-
 </div>
+
+<script>
+    const messageList = document.getElementById("chat");
+    const messageForm = document.getElementById("message-form");
+    const messageInput = document.getElementById("message-input");
+    
+    messageForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        // Clean message input
+        const message = messageInput.value.trim();
+        if (message.length === 0) {
+        return;
+        }
+
+        // Display immediate in chat
+        const messageItem = document.createElement('li');
+        messageItem.classList.add("user-message");
+        messageItem.innerHTML = `<h6>${message}</h6>`;
+        
+        messageList.appendChild(messageItem);
+        messageList.scrollTop = messageList.scrollHeight;
+
+        messageInput.value = '';
+
+        // Send message to backend
+        fetch('', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'message': message
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const aiMessage = data.response;
+                const aiMessageItem = document.createElement("li");
+                aiMessageItem.classList.add("ai-message");
+                aiMessageItem.innerHTML = `<h6>${aiMessage}</h6>`;
+
+                messageList.appendChild(aiMessageItem);
+                messageList.scrollTop = messageList.scrollHeight;
+            })
+    });
+
+</script>
 
 {% endblock %}

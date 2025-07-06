@@ -16,7 +16,7 @@ class Course(models.Model):
     description = models.CharField(max_length=200, default="No course description")
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='red')
-    created_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -28,7 +28,7 @@ class Document(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     course = models.ForeignKey('Course', on_delete=models.CASCADE)
     url = models.URLField()
-    created_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name

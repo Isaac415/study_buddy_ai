@@ -3,8 +3,9 @@ from typing import TypedDict, List, Union
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_deepseek import ChatDeepSeek
 from langgraph.graph import StateGraph, START, END
+from dotenv import load_dotenv
 
-os.environ["DEEPSEEK_API_KEY"] = "sk-22c2e535a7af4e628a9acb8f60fc0ce5"
+load_dotenv()
 
 class AgentState(TypedDict):
     messages: List[Union[HumanMessage, AIMessage]]
@@ -26,13 +27,17 @@ def process(state: AgentState) -> AgentState:
 
     return state
 
-graph = StateGraph(AgentState)
-graph.add_node("system_message", system_message)
-graph.add_node("process", process)
 
-graph.add_edge(START, "system_message")
-graph.add_edge("system_message", "process")
-graph.add_edge("process", "process")
-agent = graph.compile()
+def create_agent():
+    graph = StateGraph(AgentState)
+    graph.add_node("system_message", system_message)
+    graph.add_node("process", process)
 
-agent.invoke({"messages": []})
+    graph.add_edge(START, "system_message")
+    graph.add_edge("system_message", "process")
+    graph.add_edge("process", "process")
+
+    agent = graph.compile()
+
+    return agent
+    
