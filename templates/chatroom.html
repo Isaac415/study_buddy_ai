@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Chatroom{% endblock %}
+
+{% block content %}
+<div style="width: 55%; margin: 0 auto; min-height: 80vh; position: relative;">
+    <h2 style="text-align:center;">Chat: {{ chat_id }}</h2>
+
+    <style>
+        .ai-message {
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin: 15px 0;
+            padding-bottom: 3px;
+            width: fit-content;
+            list-style: none;
+            max-width: 80%;
+            text-wrap: wrap;
+
+        }
+
+        .user-message {
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin: 15px 0;
+            padding-bottom: 3px;
+            width: fit-content;
+            margin-left: auto; 
+            margin-right: 15px;
+            list-style: none;
+            max-width: 80%;
+            text-wrap: wrap;
+        }
+        
+        .chat h6 {
+            color: #333;
+        }
+
+        #message-input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        #chatbox form {
+            display: flex;
+            gap: 8px;
+        }
+
+        #chatroom {
+            min-height: 80vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat {
+            flex: 1 1 auto;
+            max-height: 75vh;
+            overflow-y: auto;
+            padding: 0;
+            margin: 0;
+        }
+
+        #chatbox {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding-top: 12px;
+        }
+
+    </style>
+
+    <div id="chatroom">
+        <ul id="chat">
+            <li class="user-message">
+                <h6>This is the first message.</h6>
+            </li>
+            <li class="ai-message">
+                <h6>This is the second message.</h6>
+            </li>
+        </ul>
+        <div id="chatbox">
+            <form id="message-form" method="post">
+                {% csrf_token %}
+                <input id="message-input" type="text">
+                <input id="message-send" type="button" value="Send">
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const messageList = document.getElementById("chat");
+    const messageForm = document.getElementById("message-form");
+    const messageInput = document.getElementById("message-input");
+    
+    messageForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        // Clean message input
+        const message = messageInput.value.trim();
+        if (message.length === 0) {
+        return;
+        }
+
+        // Display immediate in chat
+        const messageItem = document.createElement('li');
+        messageItem.classList.add("user-message");
+        messageItem.innerHTML = `<h6>${message}</h6>`;
+        
+        messageList.appendChild(messageItem);
+        messageList.scrollTop = messageList.scrollHeight;
+
+        messageInput.value = '';
+
+        // Send message to backend
+        fetch('', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'message': message
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const aiMessage = data.response;
+                const aiMessageItem = document.createElement("li");
+                aiMessageItem.classList.add("ai-message");
+                aiMessageItem.innerHTML = `<h6>${aiMessage}</h6>`;
+
+                messageList.appendChild(aiMessageItem);
+                messageList.scrollTop = messageList.scrollHeight;
+            })
+    });
+
+</script>
+
+{% endblock %}

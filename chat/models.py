@@ -5,8 +5,6 @@ from nanoid import generate
 class Chat(models.Model):
     id = models.CharField(primary_key=True, default=generate, editable=False)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
-    course = models.ForeignKey('core.Course', on_delete=models.CASCADE)
-    document = models.ForeignKey('core.Document', on_delete=models.CASCADE)
     title = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
