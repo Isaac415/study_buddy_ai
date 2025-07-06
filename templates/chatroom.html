@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Chatroom{% endblock %}
+{% block title %}Chat: {{ chat_id }}{% endblock %}
 
 {% block content %}
 <div style="width: 55%; margin: 0 auto; min-height: 80vh; position: relative;">
@@ -76,12 +76,17 @@
 
     <div id="chatroom">
         <ul id="chat">
-            <li class="user-message">
-                <h6>This is the first message.</h6>
-            </li>
-            <li class="ai-message">
-                <h6>This is the second message.</h6>
-            </li>
+            {% for message in messages %}
+                {% if message.role == 'human' %}
+                    <li class="user-message">
+                        <h6>{{ message.content }}</h6>
+                    </li>
+                {% elif message.role == 'ai' %}
+                    <li class="ai-message">
+                        <h6>{{ message.content }}</h6>
+                    </li>
+                {% endif %}
+            {% endfor %}
         </ul>
         <div id="chatbox">
             <form id="message-form" method="post">

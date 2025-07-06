@@ -19,11 +19,12 @@ def system_message(state: AgentState) -> AgentState:
     state["messages"].append(SystemMessage(content=content.strip()))
 
 def process(state: AgentState) -> AgentState:
-    user_message = input("Enter: ")
+
+    user_message = input("Enter your message: ")
     state["messages"].append(HumanMessage(content=user_message))
     response = llm.invoke(state["messages"])
     state["messages"].append(AIMessage(content=response.content))
-    print(f"AI: {response.content.strip()}")
+    print(f"AI: {response.content}")
 
     return state
 

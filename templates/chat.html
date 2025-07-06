@@ -6,7 +6,7 @@
 <h3>Here are all your chats</h3>
 <ul>
     {% for chat in chats %}
-      <li>{{ chat.id }} - {{ chat.document.course.name }}</li>
+      <li><a href="/chat/{{ chat.id }}">{{ chat.id }}</a> - {{ chat.document.course.name }}</li>
     {% empty %}
       <li>No chat found.</li>
     {% endfor %}
