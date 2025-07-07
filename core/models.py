@@ -41,7 +41,7 @@ class MultipleChoiceQuestion(models.Model):
     choice_2 = models.CharField(max_length=250, default="")
     choice_3 = models.CharField(max_length=250, default="")
     choice_4 = models.CharField(max_length=250, default="")
-    correct_ans = models.IntegerField(default=0)
+    correct_ans = models.IntegerField()
     explanation = models.CharField(max_length=500)
 
     def __str__(self):
@@ -51,7 +51,7 @@ class ShortQuestion(models.Model):
     id = models.CharField(primary_key=True, default=generate, editable=False)
     document = models.ForeignKey('Document', on_delete=models.CASCADE)
     question = models.CharField(max_length=500)
-    correct_ans = models.IntegerField(max_length=500)
+    correct_ans = models.CharField(max_length=500)
     explanation = models.CharField(max_length=500)
 
     def __str__(self):
