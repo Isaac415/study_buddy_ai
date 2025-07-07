@@ -4,7 +4,7 @@ from .models import Chat, Message
 from core.models import Course
 from django.contrib.auth.decorators import login_required
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
-from .study_buddy_ai import create_agent
+from .study_buddy_ai.agent import create_agent
 
 # Create your views here.
 
@@ -33,27 +33,14 @@ def create_chat(request):
 
 
 
-'''
-from dotenv import load_dotenv
-from langchain_deepseek import ChatDeepSeek
-from langchain_core.messages import HumanMessage
-
-load_dotenv()
-llm = ChatDeepSeek(model="deepseek-chat")
-'''
-
 def convert_message(messages):
     existing_messages = []
     for message in messages:
         match message.role:
-            case "system":
-                existing_messages.append(SystemMessage(content=message.content))
             case "human":
                 existing_messages.append(HumanMessage(content=message.content))
             case "ai":
                 existing_messages.append(AIMessage(content=message.content))
-            case "tool":
-                existing_messages.append(ToolMessage(content=message.content))
     
     return existing_messages
 
@@ -67,7 +54,7 @@ def chatroom(request, chat_id):
         existing_messages = convert_message(messages)
         agent = create_agent()
         user_message = request.POST["message"]
-        new_state = agent.invoke({"messages": existing_messages + [HumanMessage(content=user_message)]})
+        new_state = agent.invoke({"messages": existing_messages + [HumanMessage(content=user_message)], "request": request})
         ai_message = new_state['messages'][-1].content
 
         # Save to database
