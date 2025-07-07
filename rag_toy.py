@@ -33,6 +33,6 @@ def similarity_search(query_text, document_text_id, top_k=3):
     return response.data
 
 # Example usage:
-response = similarity_search('What did Juvenal mean by "bread and circuses"?', document_text_id="p6ZDpLW2VHDtwI3nq8Oxu", top_k=3)
+response = similarity_search('What are the main ideas?', document_text_id="p6ZDpLW2VHDtwI3nq8Oxu", top_k=3)
 
 print(response)

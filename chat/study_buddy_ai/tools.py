@@ -8,6 +8,13 @@ from langchain_core.tools import tool
 # Supabase
 from supabase import create_client
 
+def supabase_client():
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    supabase = create_client(url, key)
+
+    return supabase
+
 # Django imports
 from core.models import Course, Document
 
@@ -85,6 +92,18 @@ def get_documents_given_course(state: Annotated[dict, InjectedState], course_nam
 
     return document_list
 
+
+@tool
+def get_document_content(state: Annotated[dict, InjectedState], document_name):
+    '''
+    This tool gives the whole document text content. This information can be used to generate summary for the whole document.
+    '''
+    # Initialize Supabase Client
+    supabase = supabase_client()
+    return
+
+
+
 @tool
 def retrieve_document_info_given_query(state: Annotated[dict, InjectedState], query, document_name):
     '''
@@ -100,9 +119,7 @@ def retrieve_document_info_given_query(state: Annotated[dict, InjectedState], qu
         return "Directly tell the user cannot find such document"
     
     # Initialize Supabase Client
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY")
-    supabase = create_client(url, key)
+    supabase = supabase_client()
 
     # Create embeddings of the query
     response = supabase.functions.invoke("create-embedding", 
@@ -131,5 +148,5 @@ toolbox = [
 
     # RAG
     retrieve_document_info_given_query,
-    
+
     ]
