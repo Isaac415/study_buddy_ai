@@ -35,6 +35,7 @@ class Document(models.Model):
 
 class MultipleChoiceQuestion(models.Model):
     id = models.CharField(primary_key=True, default=generate, editable=False)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     document = models.ForeignKey('Document', on_delete=models.CASCADE)
     question = models.CharField(max_length=500)
     choice_1 = models.CharField(max_length=250, default="")
@@ -42,7 +43,6 @@ class MultipleChoiceQuestion(models.Model):
     choice_3 = models.CharField(max_length=250, default="")
     choice_4 = models.CharField(max_length=250, default="")
     correct_ans = models.IntegerField()
-    explanation = models.CharField(max_length=500)
 
     def __str__(self):
         return self.question
@@ -52,7 +52,6 @@ class ShortQuestion(models.Model):
     document = models.ForeignKey('Document', on_delete=models.CASCADE)
     question = models.CharField(max_length=500)
     correct_ans = models.CharField(max_length=500)
-    explanation = models.CharField(max_length=500)
 
     def __str__(self):
         return self.question

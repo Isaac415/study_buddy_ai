@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz{% endblock %}
+
+{% block content %}
+<h3>Here are all your multiple choice questions</h3>
+<ul>
+    {% for mcq in mcqs %}
+    <div>
+        <h6>{{ mcq.question }}</h6>
+        <p>Course: {{ mcq.document.course }}, Document: {{ mcq.document.original_filename }}</p>
+        <ul>
+            <li>{{ mcq.choice_1 }}</li>
+            <li>{{ mcq.choice_2 }}</li>
+            <li>{{ mcq.choice_3 }}</li>
+            <li>{{ mcq.choice_4 }}</li>
+        </ul>
+        <hr>
+    </div>
+    {% empty %}
+      <li>No multiple choice question found.</li>
+    {% endfor %}
+</ul>
+<hr>
+
+
+<form method="post" action="{% url 'create_mc' %}">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="question">Question</label>
+        <input type="text" class="form-control" id="question" name="question" required>
+    </div>
+    <div class="form-group">
+        <label for="choice_1">Choice 1</label>
+        <input type="text" class="form-control" id="choice_1" name="choice_1" required>
+    </div>
+    <div class="form-group">
+        <label for="choice_2">Choice 2</label>
+        <input type="text" class="form-control" id="choice_2" name="choice_2" required>
+    </div>
+    <div class="form-group">
+        <label for="choice_3">Choice 3</label>
+        <input type="text" class="form-control" id="choice_3" name="choice_3" required>
+    </div>
+    <div class="form-group">
+        <label for="choice_4">Choice 4</label>
+        <input type="text" class="form-control" id="choice_4" name="choice_4" required>
+    </div>
+    <div class="form-group">
+        <label for="correct_ans">Correct Answer (1-4)</label>
+        <input type="number" class="form-control" id="correct_ans" name="correct_ans" min="1" max="4" required>
+    </div>
+    <div class="form-group">
+        <label for="explanation">Explanation</label>
+        <input type="text" class="form-control" id="explanation" name="explanation" required>
+    </div>
+    <div class="form-group">
+        <label for="document">Document</label>
+        <select class="form-control" id="document" name="document" required>
+            {% for doc in documents %}
+                <option value="{{ doc.id }}">{{ doc.original_filename }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit">Create MCQ</button>
+</form>
+
+{% endblock %}

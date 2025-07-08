@@ -32,7 +32,6 @@ def create_chat(request):
         return redirect(f'/chat/{chat_id}')
 
 
-
 def convert_message(messages):
     existing_messages = []
     for message in messages:

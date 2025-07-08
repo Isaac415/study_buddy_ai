@@ -18,4 +18,8 @@ urlpatterns = [
     # Document
     path('document', views.document, name='document'),
     path('document/upload', views.upload_document, name="upload_document"),
+
+    # Quiz
+    path('quiz', views.quiz, name='quiz'),
+    path('mc/create', views.create_mc, name="create_mc"),
 ]

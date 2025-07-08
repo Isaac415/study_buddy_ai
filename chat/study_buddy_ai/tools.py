@@ -1,9 +1,17 @@
 import os, json
 from dotenv import load_dotenv
+
 # LangGraph imports
 from langgraph.prebuilt import InjectedState
 from typing import Annotated
 from langchain_core.tools import tool
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import PromptTemplate
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_core.documents import Document
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_deepseek import ChatDeepSeek
 
 # Supabase
 from supabase import create_client
@@ -16,7 +24,8 @@ def supabase_client():
     return supabase
 
 # Django imports
-from core.models import Course, Document
+from core.models import Course, MultipleChoiceQuestion
+from core.models import Document as DjangoDocument
 
 
 @tool
@@ -56,7 +65,7 @@ def get_user_all_documents(state: Annotated[dict, InjectedState]):
     '''
     request = state['request']
     try:
-        documents = Document.objects.filter(user_id=request.user.id)
+        documents = DjangoDocument.objects.filter(user_id=request.user.id)
     except:
         return "Directly tell the user he/she has no document."
 
@@ -82,7 +91,7 @@ def get_documents_given_course(state: Annotated[dict, InjectedState], course_nam
         return "Directly tell the user cannot find the course provided."
     
     try:
-        documents = Document.objects.filter(user_id=request.user.id, course=course)
+        documents = DjangoDocument.objects.filter(user_id=request.user.id, course=course)
     except:
         return "Directly tell the user cannot find documents for this course."
     
@@ -102,8 +111,6 @@ def get_document_content(state: Annotated[dict, InjectedState], document_name):
     supabase = supabase_client()
     return
 
-
-
 @tool
 def retrieve_document_info_given_query(state: Annotated[dict, InjectedState], query, document_name):
     '''
@@ -114,7 +121,7 @@ def retrieve_document_info_given_query(state: Annotated[dict, InjectedState], qu
     '''
     request = state["request"]
     try:
-        document = Document.objects.get(user_id=request.user.id, original_filename=document_name)
+        document = DjangoDocument.objects.get(user_id=request.user.id, original_filename=document_name)
     except:
         return "Directly tell the user cannot find such document"
     
@@ -138,6 +145,164 @@ def retrieve_document_info_given_query(state: Annotated[dict, InjectedState], qu
 
     return response.data
 
+def summarize_file(file_path: str) -> str:
+    load_dotenv()
+
+    # Extract text
+    pdf_loader = PyPDFLoader(file_path)
+    pages = pdf_loader.load()
+    large_text = "".join(page.page_content for page in pages)
+    
+    # Split text into chunks
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    texts = text_splitter.split_text(large_text)
+    documents = [Document(page_content=text) for text in texts]
+
+    
+    # Initialize LLM
+    llm = ChatDeepSeek(model="deepseek-chat")
+    
+    # Define prompt
+    stuff_prompt = PromptTemplate.from_template("Summarize this text in 5-6 sentences: {context}")
+    
+    # Set up stuff chain
+    stuff_chain = create_stuff_documents_chain(llm, stuff_prompt)
+    
+    # Run summarization
+    return stuff_chain.invoke({"context": documents})
+
+
+@tool
+def create_document_summary(state: Annotated[dict, InjectedState], document_name):
+    '''
+    This tool returns a summary of the document.
+    Parameters:
+    document_name - original_filename of the document
+    '''
+    request = state["request"]
+    try:
+        document = DjangoDocument.objects.get(user_id=request.user.id, original_filename=document_name)
+        local_path = f"./temp/{document.url}"
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    except:
+        return "Directly tell the user cannot find such document"
+    
+    # Download the document
+    supabase = supabase_client()
+    with open(local_path, "wb+") as f:
+        response = (
+            supabase.storage
+            .from_("user-uploads")
+            .download(document.url)
+        )
+        f.write(response)
+
+    try:
+        summary = summarize_file(local_path)
+    finally:
+        # Always attempt to delete the file, even if summarization fails
+        if os.path.exists(local_path):
+            os.remove(local_path)
+
+    return summary
+
+def generate_mcq(file_path: str, num_of_mcq) -> str:
+    load_dotenv()
+
+    # Extract text
+    pdf_loader = PyPDFLoader(file_path)
+    pages = pdf_loader.load()
+    large_text = "".join(page.page_content for page in pages)
+    
+    # Split text into chunks
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    texts = text_splitter.split_text(large_text)
+    documents = [Document(page_content=text) for text in texts]
+
+    
+    # Initialize LLM
+    llm = ChatDeepSeek(model="deepseek-chat")
+    
+    # Define prompt
+    stuff_prompt = PromptTemplate.from_template("Generate {num_of_mcq} quiz(zes) from this text: {context}. Each multiple choice question should have 4 choices. Also give the correct answer. Try to keep your response in this format: [q1: str, q1c1: str, q1c2: str, q1c3: str, q1c4: str, q1ans: int], [q2: str, q2c1: str, q2c2: str, q2c3: str, q2c4: str, q2ans: int], ...")
+    
+    # Set up stuff chain
+    stuff_chain = create_stuff_documents_chain(llm, stuff_prompt)
+    
+    # Run summarization
+    return stuff_chain.invoke({"num_of_mcq": num_of_mcq, "context": documents})
+
+@tool
+def create_multiple_choice_questions_given_document(state: Annotated[dict, InjectedState], document_name: str, num_of_mcq: int):
+    '''
+    This tool returns some multiple choice questions.
+    Parameters:
+    document_name: str - original_filename of the document
+    num_of_mcq: int - the number of multiple choice this tool should generate
+    '''
+    request = state["request"]
+    try:
+        document = DjangoDocument.objects.get(user_id=request.user.id, original_filename=document_name)
+        local_path = f"./temp/{document.url}"
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    except:
+        return "Directly tell the user cannot find such document"
+    
+    # Download the document
+    supabase = supabase_client()
+    with open(local_path, "wb+") as f:
+        response = (
+            supabase.storage
+            .from_("user-uploads")
+            .download(document.url)
+        )
+        f.write(response)
+
+    try:
+        mcqs = generate_mcq(local_path, num_of_mcq)
+    finally:
+        # Always attempt to delete the file, even if summarization fails
+        if os.path.exists(local_path):
+            os.remove(local_path)
+
+    return mcqs
+
+@tool
+def save_multiple_choice_question(state: Annotated[dict, InjectedState], 
+                                  document_name: str,
+                                  question: str,
+                                  choice_1: str,
+                                  choice_2: str,
+                                  choice_3: str,
+                                  choice_4: str,
+                                  correct_ans: int):
+    '''
+    This tool will save one single multiple choice question into the database
+    Parameters:
+    document_name: str - original_filename of the document
+    choice_1, choice_2, choice_3, choice_4: str - the four choices of the question
+    correct_ans: int - the correct answer of the question
+    '''
+    request = state["request"]
+    try:
+        document = DjangoDocument.objects.get(user_id=request.user.id, original_filename=document_name)
+    except:
+        return "Directly tell user and error has occured and please try again"
+    
+    question = MultipleChoiceQuestion.objects.create(
+        user=request.user, 
+        document=document, 
+        question=question, 
+        choice_1=choice_1,
+        choice_2=choice_2,
+        choice_3=choice_3,
+        choice_4=choice_4,
+        correct_ans=correct_ans,
+    )
+
+    return f"Successfully saved question: {question}"
+
+
 
 toolbox = [
     # Basic
@@ -148,5 +313,7 @@ toolbox = [
 
     # RAG
     retrieve_document_info_given_query,
-
+    create_document_summary,
+    create_multiple_choice_questions_given_document,
+    save_multiple_choice_question,
     ]

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from .models import Course, Document
+from .models import Course, Document, MultipleChoiceQuestion
 import os
 from django.conf import settings
 from supabase import create_client
@@ -191,3 +191,43 @@ def upload_document(request):
         os.remove(local_file_path)
 
         return redirect('/document')
+
+'''
+Quiz
+'''
+@login_required
+def quiz(request):
+    mcqs = MultipleChoiceQuestion.objects.filter(user=request.user)
+    documents = Document.objects.filter(user=request.user)
+    context = {
+        'mcqs': mcqs,
+        'documents': documents,
+    }
+
+    return render(request, 'quiz.html', context)
+
+
+@login_required
+def create_mc(request):
+    if request.method == 'POST':
+        question = request.POST['question']
+        choice_1 = request.POST['choice_1']
+        choice_2 = request.POST['choice_2']
+        choice_3 = request.POST['choice_3']
+        choice_4 = request.POST['choice_4']
+        correct_ans = int(request.POST['correct_ans'])
+        explanation = request.POST['explanation']
+        document_id = request.POST['document']
+        document = Document.objects.get(id=document_id, user=request.user)
+        mcq = MultipleChoiceQuestion.objects.create(
+            user=request.user,
+            document=document,
+            question=question,
+            choice_1=choice_1,
+            choice_2=choice_2,
+            choice_3=choice_3,
+            choice_4=choice_4,
+            correct_ans=correct_ans,
+            explanation=explanation,
+        )
+        return redirect('/quiz')
