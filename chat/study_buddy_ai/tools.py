@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 # LangGraph imports
 from langgraph.prebuilt import InjectedState
-from typing import Annotated
+from typing import Annotated, List
 from langchain_core.tools import tool
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -24,7 +24,7 @@ def supabase_client():
     return supabase
 
 # Django imports
-from core.models import Course, MultipleChoiceQuestion
+from core.models import Course, MultipleChoiceQuestion, ShortQuestion, Quiz
 from core.models import Document as DjangoDocument
 
 
@@ -224,7 +224,7 @@ def generate_mcq(file_path: str, num_of_mcq) -> str:
     llm = ChatDeepSeek(model="deepseek-chat")
     
     # Define prompt
-    stuff_prompt = PromptTemplate.from_template("Generate {num_of_mcq} quiz(zes) from this text: {context}. Each multiple choice question should have 4 choices. Also give the correct answer. Try to keep your response in this format: [q1: str, q1c1: str, q1c2: str, q1c3: str, q1c4: str, q1ans: int], [q2: str, q2c1: str, q2c2: str, q2c3: str, q2c4: str, q2ans: int], ...")
+    stuff_prompt = PromptTemplate.from_template("Generate {num_of_mcq} multiple choice quetions from this text: {context}. Each multiple choice question should have 4 choices. Also give the correct answer. Try to keep your response in this format: [q1: str, q1c1: str, q1c2: str, q1c3: str, q1c4: str, q1ans: int], [q2: str, q2c1: str, q2c2: str, q2c3: str, q2c4: str, q2ans: int], ...")
     
     # Set up stuff chain
     stuff_chain = create_stuff_documents_chain(llm, stuff_prompt)
@@ -235,10 +235,10 @@ def generate_mcq(file_path: str, num_of_mcq) -> str:
 @tool
 def create_multiple_choice_questions_given_document(state: Annotated[dict, InjectedState], document_name: str, num_of_mcq: int):
     '''
-    This tool returns some multiple choice questions.
+    This tool returns some multiple choice questions of given document.
     Parameters:
     document_name: str - original_filename of the document
-    num_of_mcq: int - the number of multiple choice this tool should generate
+    num_of_mcq: int - the number of multiple choice questions this tool should generate
     '''
     request = state["request"]
     try:
@@ -277,9 +277,10 @@ def save_multiple_choice_question(state: Annotated[dict, InjectedState],
                                   choice_4: str,
                                   correct_ans: int):
     '''
-    This tool will save one single multiple choice question into the database
+    This tool will save one single multiple choice question into the database. The output will contain the question id.
     Parameters:
     document_name: str - original_filename of the document
+    question: str - question
     choice_1, choice_2, choice_3, choice_4: str - the four choices of the question
     correct_ans: int - the correct answer of the question
     '''
@@ -300,9 +301,142 @@ def save_multiple_choice_question(state: Annotated[dict, InjectedState],
         correct_ans=correct_ans,
     )
 
-    return f"Successfully saved question: {question}"
+    return f"Successfully saved multiple choice question: {question}. Question id: {question.id}"
 
+def generate_sq(file_path: str, num_of_sq) -> str:
+    load_dotenv()
 
+    # Extract text
+    pdf_loader = PyPDFLoader(file_path)
+    pages = pdf_loader.load()
+    large_text = "".join(page.page_content for page in pages)
+    
+    # Split text into chunks
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    texts = text_splitter.split_text(large_text)
+    documents = [Document(page_content=text) for text in texts]
+
+    # Initialize LLM
+    llm = ChatDeepSeek(model="deepseek-chat")
+    
+    # Define prompt
+    stuff_prompt = PromptTemplate.from_template("Generate {num_of_sq} short questions from this text: {context}. Please also give the correct answer. Try to keep your response in this format: [q1: str, q1ans: str], [q2: str, q2ans: str], ...")
+    
+    # Set up stuff chain
+    stuff_chain = create_stuff_documents_chain(llm, stuff_prompt)
+    
+    # Run summarization
+    return stuff_chain.invoke({"num_of_sq": num_of_sq, "context": documents})
+
+@tool
+def create_short_questions_given_document(state: Annotated[dict, InjectedState], document_name: str, num_of_sq: int):
+    '''
+    This tool returns some short questions of given document.
+    Parameters:
+    document_name: str - original_filename of the document
+    num_of_sq: int - the number of short questions this tool should generate
+    '''
+    request = state["request"]
+    try:
+        document = DjangoDocument.objects.get(user_id=request.user.id, original_filename=document_name)
+        local_path = f"./temp/{document.url}"
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    except:
+        return "Directly tell the user cannot find such document"
+    
+    # Download the document
+    supabase = supabase_client()
+    with open(local_path, "wb+") as f:
+        response = (
+            supabase.storage
+            .from_("user-uploads")
+            .download(document.url)
+        )
+        f.write(response)
+
+    try:
+        sqs = generate_sq(local_path, num_of_sq)
+    finally:
+        # Always attempt to delete the file, even if summarization fails
+        if os.path.exists(local_path):
+            os.remove(local_path)
+
+    return sqs
+
+@tool
+def save_short_question(state: Annotated[dict, InjectedState], 
+                                  document_name: str,
+                                  question: str,
+                                  correct_ans: str):
+    '''
+    This tool will save one single short question into the database. The output will contain the question id.
+    Parameters:
+    document_name: str - original_filename of the document
+    question: str - questions
+    correct_ans: str - the correct answer of the question
+    '''
+    request = state["request"]
+    try:
+        document = DjangoDocument.objects.get(user_id=request.user.id, original_filename=document_name)
+    except:
+        return "Directly tell user and error has occured and please try again"
+    
+    question = ShortQuestion.objects.create(
+        user=request.user, 
+        document=document, 
+        question=question, 
+        correct_ans=correct_ans,
+    )
+
+    return f"Successfully saved short question: {question}. Question id: {question.id}"
+
+@tool
+def generate_quiz(state: Annotated[dict, InjectedState], 
+                  document_name: str, 
+                  name: str,
+                  mcq_id_list: List[str], 
+                  sq_id_list: List[str]):
+    '''
+    This tool creates and save a quiz. UNLESS you are provided with ids of existing questions, you will have to first use these tools:
+    (1) create_multiple_choice_questions_given_document: to generate the multiple choice questions
+    (2) save_multiple_choice_question: to save the questions from part (1)
+    (3) create_short_questions_given_document: to generate the short questions
+    (4) save_short_question: to save the questions from part (3)
+    You will get the ID of each question after saving each of them.
+    Parameters:
+    document_name: str - original_filename of the document
+    name: str - name of the quiz (You will have to create this on your own, unless provided by user)
+    mcq_id_list: List[str] - list of multiple choice question id
+    sq_id_list: List[str] - list of short question id
+    '''
+    request = state["request"]
+    try:
+        document = DjangoDocument.objects.get(user_id=request.user.id, original_filename=document_name)
+    except:
+        return "Directly tell user and error has occured and please try again"
+
+    # Create empty quiz
+    quiz = Quiz.objects.create(user=request.user, 
+                               document=document,
+                               name=name)
+    
+    # Save mutliple choice questions
+    for mcq_id in mcq_id_list:
+        mcq = MultipleChoiceQuestion.objects.get(id=mcq_id)
+        quiz.multiple_choice_questions.add(mcq)
+
+    # Save short questions
+    for sq_id in sq_id_list:
+        sq = ShortQuestion.objects.get(id=sq_id)
+        quiz.short_questions.add(sq)
+
+    quiz.save()
+
+    tool_message = f'''
+    Successfully created quiz {quiz.name}. Quiz id: {quiz.id}. Please include a hyperlink to /quiz/{quiz.id} in your reply.
+    '''
+    
+    return tool_message
 
 toolbox = [
     # Basic
@@ -314,6 +448,11 @@ toolbox = [
     # RAG
     retrieve_document_info_given_query,
     create_document_summary,
+
+    # Quiz
     create_multiple_choice_questions_given_document,
     save_multiple_choice_question,
+    create_short_questions_given_document,
+    save_short_question,
+    generate_quiz,
     ]

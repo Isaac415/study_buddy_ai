@@ -49,9 +49,22 @@ class MultipleChoiceQuestion(models.Model):
 
 class ShortQuestion(models.Model):
     id = models.CharField(primary_key=True, default=generate, editable=False)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     document = models.ForeignKey('Document', on_delete=models.CASCADE)
     question = models.CharField(max_length=500)
     correct_ans = models.CharField(max_length=500)
 
     def __str__(self):
         return self.question
+    
+class Quiz(models.Model):
+    id = models.CharField(primary_key=True, default=generate, editable=False)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    document = models.ForeignKey('Document', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, default="")
+    multiple_choice_questions = models.ManyToManyField(MultipleChoiceQuestion, blank=True)
+    short_questions = models.ManyToManyField(ShortQuestion, blank=True)
+
+    def __str__(self):
+        return self.name
+

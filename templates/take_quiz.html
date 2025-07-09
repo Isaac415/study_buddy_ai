@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz: {{ quiz.name }}{% endblock %}
+
+{% block content %}
+<p>Course: {{ quiz.document.course }}, Document: {{ quiz.document.original_filename }}</p>
+<h5>Multiple Choice Questions</h5>
+<ul>
+    {% for mcq in quiz.multiple_choice_questions.all %}
+        <p>{{ mcq.question }}</p>
+        <ul>
+            <li>{{ mcq.choice_1 }}</li>
+            <li>{{ mcq.choice_2 }}</li>
+            <li>{{ mcq.choice_3 }}</li>
+            <li>{{ mcq.choice_4 }}</li>
+        </ul>
+        <hr>
+    {% empty %}
+        <li>No multiple choice question.</li>
+    {% endfor %}
+</ul>
+<br>
+<h5>Short Questions</h5>
+<ol>
+    {% for sq in quiz.short_questions.all %}
+        <li>{{ sq.question }}</li>
+        <hr>
+    {% empty %}
+        <li>No short question.</li>
+    {% endfor %}
+</ol>
+
+{% endblock %}

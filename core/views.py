@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from .models import Course, Document, MultipleChoiceQuestion
+from .models import Course, Document, MultipleChoiceQuestion, ShortQuestion, Quiz
 import os
 from django.conf import settings
 from supabase import create_client
@@ -197,10 +197,10 @@ Quiz
 '''
 @login_required
 def quiz(request):
-    mcqs = MultipleChoiceQuestion.objects.filter(user=request.user)
+    quizzes = Quiz.objects.filter(user=request.user)
     documents = Document.objects.filter(user=request.user)
     context = {
-        'mcqs': mcqs,
+        'quizzes': quizzes,
         'documents': documents,
     }
 
@@ -231,3 +231,12 @@ def create_mc(request):
             explanation=explanation,
         )
         return redirect('/quiz')
+
+@login_required
+def take_quiz(request, quiz_id):
+    quiz = Quiz.objects.get(user=request.user, id=quiz_id)
+    context = {
+        'quiz': quiz
+    }
+
+    return render(request, 'take_quiz.html', context)
