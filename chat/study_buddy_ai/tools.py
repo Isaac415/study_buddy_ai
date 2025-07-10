@@ -433,7 +433,7 @@ def generate_quiz(state: Annotated[dict, InjectedState],
     quiz.save()
 
     tool_message = f'''
-    Successfully created quiz {quiz.name}. Quiz id: {quiz.id}. Please include a hyperlink to /quiz/{quiz.id} in your reply.
+    Successfully created quiz {quiz.name}. Quiz id: {quiz.id}. Please include a hyperlink (that opens in a new tab) to /quiz/{quiz.id} in your reply.
     '''
     
     return tool_message
