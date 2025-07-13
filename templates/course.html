@@ -3,37 +3,91 @@
 {% block title %}Course{% endblock %}
 
 {% block content %}
-<h3>Here are all your courses</h3>
-<ul>
-    {% for course in courses %}
-      <li>{{ course.name }}</li>
-    {% empty %}
-      <li>No courses found.</li>
-    {% endfor %}
-</ul>
-<hr>
-<h3>Create a course</h3>
-<form method="post" action="{% url 'create_course' %}">
-    {% csrf_token %}
-    <div class="form-group">
-        <label for="name">Name</label>
-        <input type="text" class="form-control" id="name" name="name" required>
+
+<div class="d-flex">
+    <div class="flex-column flex-shrink-0 p-3 bg-light" style="width: 250px;">
+      <a href="/course" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
+        <span class="fs-4">Course</span>
+      </a>
+      <hr>
+      <ul class="nav nav-pills flex-column mb-auto">
+        {% for course in courses %}
+          <li class="nav-item">
+            <a href="{% url 'course_detail' course.id %}"
+               class="nav-link {% if course.id == this_course.id %}active{% else %}link-dark{% endif %}">
+              {{ course.name }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      <hr>
     </div>
-    <div class="form-group">
-        <label for="description">Description</label>
-        <input type="text" class="form-control" id="description" name="description" required>
+
+    <div class="flex-grow-1 p-3">
+        <br>
+        {% if request.path == '/course' %}
+        <h2 class="text-center">Choose Your Course</h2><br>
+        
+        <div class="d-grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+            {% for course in courses %}
+            <div class="card d-flex flex-column h-100 shadow" style="min-height: 235px;">
+              <div class="card-header text-center fs-4">
+                {{ course.name }}
+              </div>
+              <div class="card-body flex-grow-1">
+                <h5 class="card-title">Special title treatment</h5>
+                <p class="card-text">{{ course.description }}</p>
+              </div>
+              <a href="{% url 'course_detail' course.id %}" class="card-footer text-muted text-decoration-none text-end">
+                Go to course
+              </a>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Separation line -->
+        <br>
+        <div class="d-flex align-items-center">
+            <hr class="flex-grow-1">
+            <span class="px-4">Or</span>
+            <hr class="flex-grow-1">
+        </div>
+        <br>
+        <!-- Create new course form -->
+        <div class="container w-50">
+          <h2 class="mb-4 text-center">Create a Course</h2>
+          <div class="card mx-auto shadow" style="max-width: 400px;">
+            <div class="card-body">
+              <form method="post" action="{% url 'create_course' %}">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                  <label for="name">Name</label>
+                  <input type="text" class="form-control" id="name" name="name" required placeholder="Enter course name">
+                </div>
+                <div class="form-group mb-3">
+                  <label for="description">Description</label>
+                  <input type="textarea" class="form-control" id="description" name="description" required placeholder="Enter course description">
+                </div>
+                <div class="form-group mb-4">
+                  <label for="color">Color</label>
+                  <select class="form-select" id="color" name="color">
+                    <option value="black">Black</option>
+                    <option value="red">Red</option>
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="yellow">Yellow</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create Course</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {% endif %}
+        
+        
+        {% block course_detail %}{% endblock %}
     </div>
-    <div class="form-group">
-        <label for="color">Color</label>
-        <select name="color">
-            <option value="black">Black</option>
-            <option value="red">Red</option>
-            <option value="blue">Blue</option>
-            <option value="green">Green</option>
-            <option value="yellow">Yellow</option>
-        </select>
-    </div>
-    <button type="submit">Create course</button>
-</form>
+  </div>
 
 {% endblock %}

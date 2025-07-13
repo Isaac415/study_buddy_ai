@@ -13,6 +13,7 @@ from langchain_core.documents import Document
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_deepseek import ChatDeepSeek
 
+
 # Supabase
 from supabase import create_client
 
@@ -397,7 +398,7 @@ def generate_quiz(state: Annotated[dict, InjectedState],
                   mcq_id_list: List[str], 
                   sq_id_list: List[str]):
     '''
-    This tool creates and save a quiz. UNLESS you are provided with ids of existing questions, you will have to first use these tools:
+    This tool creates and save a quiz. Ask the user on which docuemnt to generate questions first if no documents were mentioned in previous chat. UNLESS you are provided with ids of existing questions, you will have to first use these tools:
     (1) create_multiple_choice_questions_given_document: to generate the multiple choice questions
     (2) save_multiple_choice_question: to save the questions from part (1)
     (3) create_short_questions_given_document: to generate the short questions
@@ -433,7 +434,7 @@ def generate_quiz(state: Annotated[dict, InjectedState],
     quiz.save()
 
     tool_message = f'''
-    Successfully created quiz {quiz.name}. Quiz id: {quiz.id}. Please include a hyperlink (that opens in a new tab) to /quiz/{quiz.id} in your reply.
+    Successfully created quiz {quiz.name}. Quiz id: {quiz.id}. Please include a hyperlink to /quiz/{quiz.id} in your reply.
     '''
     
     return tool_message

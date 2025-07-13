@@ -14,6 +14,7 @@ urlpatterns = [
     # Course
     path('course', views.course, name='course'),
     path('course/create', views.create_course, name="create_course"),
+    path('course/<slug:course_id>', views.course_detail, name="course_detail"),
 
     # Document
     path('document', views.document, name='document'),

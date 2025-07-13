@@ -92,6 +92,19 @@ def course(request):
     return render(request, 'course.html', context)
 
 @login_required
+def course_detail(request, course_id):
+    courses = Course.objects.filter(user=request.user)
+    this_course = Course.objects.get(user=request.user, id=course_id)
+
+    context = {
+        'courses': courses,
+        'this_course': this_course,
+    }
+
+    return render(request, 'course_detail.html', context)
+
+
+@login_required
 def create_course(request):
     if request.method == 'POST':
         name = request.POST['name'].strip()
@@ -106,7 +119,7 @@ def create_course(request):
                         )
         course.save()
 
-        return redirect('/course')
+        return redirect(f'/course/{course.id}')
 
 '''
 Document
