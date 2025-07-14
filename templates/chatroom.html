@@ -71,8 +71,6 @@
     
     // Scroll to bottom on page load
     window.addEventListener('DOMContentLoaded', () => {
-        const chatMessages = document.getElementById('chat-messages');
-        chatMessages.scrollTop = chatMessages.scrollHeight;
         document.querySelectorAll('.message-content').forEach(el => {
             el.innerHTML = md.render(el.textContent);
         });
@@ -93,8 +91,6 @@
         messageItem.innerHTML = `<div class=\"bg-primary text-white rounded-3 p-2 mb-1 ms-auto\" style=\"max-width: 80%; word-break: break-word;\"><span class=\"message-content\">${md.render(message)}</span></div>`;
         
         messageList.appendChild(messageItem);
-        const chatMessages = document.getElementById('chat-messages');
-        chatMessages.scrollTop = chatMessages.scrollHeight;
 
         messageInput.value = '';
         messageInput.disabled = true;
@@ -117,11 +113,12 @@
                 aiMessageItem.innerHTML = `<div class=\"bg-light text-dark rounded-3 p-2 mb-1 me-auto\" style=\"max-width: 80%; word-break: break-word;\"><span class=\"message-content\">${md.render(aiMessage)}</span></div>`;
 
                 messageList.appendChild(aiMessageItem);
-                const chatMessages = document.getElementById('chat-messages');
-                chatMessages.scrollTop = chatMessages.scrollHeight;
                 messageInput.disabled = false;
                 messageSend.disabled = false;
                 messageInput.focus();
+                // Scroll to bottom after user sends a message
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             })
     });
 

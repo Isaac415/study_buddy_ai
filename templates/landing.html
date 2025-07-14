@@ -3,5 +3,100 @@
 {% block title %}Study Buddy AI{% endblock %}
 
 {% block content %}
-<h1 style="text-align:center;">Welcome to Study Buddy AI!</h1>
+<div class="container d-flex flex-column align-items-center justify-content-center min-vh-100" style="margin-top: 10px;">
+  <h1 class="text-center mb-2 mt-2">Welcome to 🤖 StudyBuddy AI!</h1>
+  <br><br>
+  <div class="row w-100 justify-content-center">
+    <div class="col-md-5 col-lg-4">
+      <!-- Login Card -->
+      <div id="login-card" class="card shadow" style="max-width: 350px; margin-top: 0;">
+        <div class="card-header text-center fw-bold fs-4">Login</div>
+        <div class="card-body pt-3 pb-2" style="padding-top: 0.75rem !important; padding-bottom: 0.5rem !important;">
+          {% if login_error_message %}
+            <div class="alert alert-danger" role="alert">{{ login_error_message }}</div>
+          {% endif %}
+          <form method="post" action="/login">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="login-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="login-username" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="login-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="login-password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+        <div class="card-footer text-center bg-white border-0">
+            <!-- Footer for Login Card -->
+            <div class="card text-center mb-0 border-0">
+              <div class="card-footer text-muted bg-white border-0">
+                No account? <a href="#" id="show-register">Sign up</a>
+              </div>
+            </div>
+        </div>
+      </div>
+      <!-- Register Card -->
+      <div id="register-card" class="card shadow d-none" style="max-width: 350px; margin-top: 0;">
+        <div class="card-header text-center fw-bold fs-4">Register</div>
+        <div class="card-body pt-3 pb-2" style="padding-top: 0.75rem !important; padding-bottom: 0.5rem !important;">
+          {% if register_error_message %}
+            <div class="alert alert-danger" role="alert">{{ register_error_message }}</div>
+          {% endif %}
+          <form method="post" action="/register">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="register-username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="register-username" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="register-email" class="form-label">Email</label>
+              <input type="text" class="form-control" id="register-email" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="register-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="register-password" name="password" required>
+            </div>
+            <div class="mb-3">
+              <label for="register-password-confirmation" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="register-password-confirmation" name="password_confirmation" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+          </form>
+        </div>
+        <div class="card-footer text-center bg-white border-0" style="padding-bottom: 10px">
+            <!-- Footer for Register Card -->
+            <div class="card text-center mb-0 border-0">
+              <div class="card-footer text-muted bg-white border-0">
+                Already have an account? <a href="#" id="show-login">Log In</a>
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const loginCard = document.getElementById('login-card');
+    const registerCard = document.getElementById('register-card');
+    const showRegister = document.getElementById('show-register');
+    const showLogin = document.getElementById('show-login');
+    if (showRegister) {
+      showRegister.addEventListener('click', function(e) {
+        e.preventDefault();
+        loginCard.classList.add('d-none');
+        registerCard.classList.remove('d-none');
+      });
+    }
+    if (showLogin) {
+      showLogin.addEventListener('click', function(e) {
+        e.preventDefault();
+        registerCard.classList.add('d-none');
+        loginCard.classList.remove('d-none');
+      });
+    }
+  });
+</script>
 {% endblock %}

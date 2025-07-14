@@ -25,6 +25,7 @@ def chat(request):
 def create_chat(request):
     if request.method == "POST":
         chat = Chat(user=request.user)
+        chat.title = "New Chat"
         chat.save()
 
         chat_id = chat.id
@@ -74,3 +75,15 @@ def chatroom(request, chat_id):
     }
 
     return render(request, 'chatroom.html', context)
+
+@login_required
+def change_chat_name(request):
+    if request.method == "POST":
+        chat_id = request.POST["chat_id"]
+        new_name = request.POST["new_name"]
+
+        chat = Chat.objects.get(user=request.user, id=chat_id)
+        chat.title = new_name
+        chat.save()
+
+    return JsonResponse({'message': 'success'}) 

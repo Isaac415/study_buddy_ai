@@ -3,7 +3,11 @@
 {% block title %}Quiz: {{ quiz.name }}{% endblock %}
 
 {% block course_detail %}
-<a href="/course/{{ this_course.id }}" class="btn btn-secondary mb-3">&larr; Back to Course</a>
+<a href="/course/{{ this_course.id }}" 
+   class="btn btn-outline-secondary mb-3" 
+   style="position: sticky; top: 0; z-index: 100;">
+   &larr; Back to Course
+</a>
 <div class="container mt-4" style="width: 60%">
   <h2 class="mb-4 text-center">{{ quiz.name }}</h2>
   <div class="card mb-4 w-100">

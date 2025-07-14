@@ -16,6 +16,14 @@
   .d-flex {
     flex-direction: row;
   }
+  /* Hide edit button by default, show on card-body hover */
+  .card-body .edit-chat-btn {
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .card-body:hover .edit-chat-btn {
+    opacity: 1;
+  }
 </style>
 
 
@@ -33,7 +41,7 @@
       <form style="width: 100%" method="post" action="{% url 'create_chat' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="form-group">
-      <button style="width: 100%" type="submit" class="btn btn-primary">New Chat</button>
+      <button style="width: 100%" type="submit" class="btn btn-outline-secondary">New Chat</button>
       </div>
     </form>
     </div>
@@ -43,8 +51,9 @@
       {% for chat in chats %}
         <a href="{% url 'chatroom' chat.id %}" class="text-decoration-none">
           <div class="card {% if chat.id == chat_id %}border-primary{% else %}border-0{% endif %} shadow-sm">
-            <div class="card-body d-flex align-items-center py-2 px-3">
-              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="fw-semibold {% if chat.id == chat_id %}text-primary{% else %}text-dark{% endif %}">{{ chat.id }}</span>
+            <div class="card-body d-flex align-items-center py-2 px-3 justify-content-between">
+              <span id="chat-title-{{ chat.id }}" style="white-space: nowrap; overflow: hidden;" class="fw-semibold {% if chat.id == chat_id %}text-primary{% else %}text-dark{% endif %}">{% if chat.title %}{{ chat.title }}{% else %}{{ chat.id }}{% endif %}</span>
+              <button type="button" class="btn btn-sm ms-2 p-0 edit-chat-btn" style="background: transparent; width: 20px; height: 20px; border-radius: 3px; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; border: none;" data-chat-id="{{ chat.id }}">✏️</button>
             </div>
           </div>
         </a>
@@ -65,5 +74,37 @@
       {% block chatroom %}{% endblock %}
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-chat-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var chatId = btn.getAttribute('data-chat-id');
+        var description = 'Enter new chat title';
+        var userInput = window.prompt(description, '');
+
+        // Sends name change to backend
+        if (userInput !== null) {
+          fetch('/chat/change_name', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+              'chat_id': chatId,
+              'new_name': userInput
+            })
+          });
+          // Immediately update the chat title in the UI
+          var titleSpan = document.getElementById('chat-title-' + chatId);
+          if (titleSpan) {
+            titleSpan.textContent = userInput;
+          }
+        }
+      });
+    });
+  });
+</script>
 
 {% endblock %}
