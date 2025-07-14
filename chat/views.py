@@ -5,6 +5,7 @@ from core.models import Course
 from django.contrib.auth.decorators import login_required
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
 from .study_buddy_ai.agent import create_agent
+from django.utils import timezone
 
 # Create your views here.
 
@@ -13,11 +14,9 @@ Chat
 '''
 @login_required
 def chat(request):
-    chats = Chat.objects.filter(user=request.user)
-    courses = Course.objects.filter(user=request.user)
+    chats = Chat.objects.filter(user=request.user).order_by('-last_message_time')
     context = {
         'chats': chats,
-        'courses': courses,
     }
 
     return render(request, 'chat.html', context)
@@ -59,6 +58,10 @@ def chatroom(request, chat_id):
         # Save to database
         Message.objects.create(chat=chat, role="human", content=user_message)
         Message.objects.create(chat=chat, role="ai", content=ai_message)
+
+        # Update chat last message timestamp
+        chat.last_message_time = timezone.now()
+        chat.save(update_fields=['last_message_time'])
 
         return JsonResponse({"response": ai_message})
     

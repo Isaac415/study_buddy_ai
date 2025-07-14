@@ -6,6 +6,7 @@ class Chat(models.Model):
     id = models.CharField(primary_key=True, default=generate, editable=False)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     title = models.CharField(max_length=50, null=True, blank=True)
+    last_message_time = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
