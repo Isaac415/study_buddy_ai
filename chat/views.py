@@ -74,7 +74,3 @@ def chatroom(request, chat_id):
     }
 
     return render(request, 'chatroom.html', context)
-
-@login_required
-def change_chat_name(request):
-    return

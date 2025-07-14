@@ -34,7 +34,7 @@
     </div>
 
     <div class="flex-grow-1 p-3" style="overflow-y: auto; height: 100vh;">
-        <br>
+        <div class="my-4"></div>
         {% if request.path == '/course' %}
         <h2 class="text-center">Choose Your Course</h2><br>
         
@@ -92,12 +92,11 @@
             </div>
           </div>
         </div>
-
+        <br>
         {% endif %}
         
         {% block course_detail %}{% endblock %}
-        <br>
-        <br>
+        <br><br>
     </div>
   </div>
 

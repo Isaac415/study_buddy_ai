@@ -42,7 +42,7 @@ def login(request):
         user = auth.authenticate(request, username=username, password=password)
         if user is not None:
             auth.login(request, user)
-            return redirect('/dashboard')
+            return redirect('/course')
         else:
             error_message = 'Invalid username or password'
             return render(request, 'login.html', {'error_message': error_message})
@@ -63,7 +63,7 @@ def register(request):
                 user = User.objects.create_user(username, email, password)
                 user.save()
                 auth.login(request, user)
-                return redirect('/dashboard')
+                return redirect('/course')
             except Exception as e:
                 error_message = f'Error creating account: {str(e)}'
                 return render(request, 'register.html', {'error_message': error_message})
