@@ -10,10 +10,16 @@
   {% block styles %}{% endblock %}
 
 </head>
-
-<body style="max-width: 100%; margin: 0 auto;">
+<style>
+  html, body {
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+  }
+</style>
+<body style="max-width: 100%; padding-top: 56px; margin: 0 auto;">
   <div style="top: 0; width: 100%; z-index: 1000;">
-    <nav class="navbar navbar-expand-lg bg-light border-bottom border-gray-300" data-bs-theme="light">
+    <nav class="navbar navbar-expand-lg bg-light border-bottom border-gray-300 fixed-top" data-bs-theme="light">
       <div class="container-fluid">
         {% if user.is_authenticated %}
           <a class="navbar-brand" href="/dashboard">🤖 StudyBuddy AI</a>

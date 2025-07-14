@@ -398,12 +398,7 @@ def generate_quiz(state: Annotated[dict, InjectedState],
                   mcq_id_list: List[str], 
                   sq_id_list: List[str]):
     '''
-    This tool creates and save a quiz. Ask the user on which docuemnt to generate questions first if no documents were mentioned in previous chat. UNLESS you are provided with ids of existing questions, you will have to first use these tools:
-    (1) create_multiple_choice_questions_given_document: to generate the multiple choice questions
-    (2) save_multiple_choice_question: to save the questions from part (1)
-    (3) create_short_questions_given_document: to generate the short questions
-    (4) save_short_question: to save the questions from part (3)
-    You will get the ID of each question after saving each of them.
+    This tool creates and save a quiz. Ask the user on which docuemnt to generate questions first if no documents were mentioned in previous chat. UNLESS you are provided with ids of existing questions, you will have to first use other tools to generate and save questions.
     Parameters:
     document_name: str - original_filename of the document
     name: str - name of the quiz (You will have to create this on your own, BE CREATIVE!)

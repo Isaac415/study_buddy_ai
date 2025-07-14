@@ -45,8 +45,10 @@ def convert_message(messages):
 @login_required
 def chatroom(request, chat_id):
     # Load original chat
-    chat = Chat.objects.get(id=chat_id, user=request.user)
-    messages = Message.objects.filter(chat=chat).order_by('created_at')
+    this_chat = Chat.objects.get(id=chat_id, user=request.user)
+    messages = Message.objects.filter(chat=this_chat).order_by('created_at')
+    chats = Chat.objects.filter(user=request.user).order_by('-last_message_time')
+
 
     if request.method == "POST":
         existing_messages = convert_message(messages)
@@ -56,18 +58,23 @@ def chatroom(request, chat_id):
         ai_message = new_state['messages'][-1].content
 
         # Save to database
-        Message.objects.create(chat=chat, role="human", content=user_message)
-        Message.objects.create(chat=chat, role="ai", content=ai_message)
+        Message.objects.create(chat=this_chat, role="human", content=user_message)
+        Message.objects.create(chat=this_chat, role="ai", content=ai_message)
 
         # Update chat last message timestamp
-        chat.last_message_time = timezone.now()
-        chat.save(update_fields=['last_message_time'])
+        this_chat.last_message_time = timezone.now()
+        this_chat.save(update_fields=['last_message_time'])
 
         return JsonResponse({"response": ai_message})
     
     context = {
         'chat_id': chat_id,
         'messages': messages,
+        'chats': chats,
     }
 
     return render(request, 'chatroom.html', context)
+
+@login_required
+def change_chat_name(request):
+    return

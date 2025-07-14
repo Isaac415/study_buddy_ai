@@ -3,23 +3,67 @@
 {% block title %}Chat{% endblock %}
 
 {% block content %}
+<style>
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  .d-flex {
+    flex-direction: row;
+  }
+</style>
 
-<h3>Here are all your chats</h3>
-<ul>
-    {% for chat in chats %}
-      <li><a href="/chat/{{ chat.id }}">{{ chat.id }}</a> - {{ chat.document.course.name }}</li>
-    {% empty %}
-      <li>No chat found.</li>
-    {% endfor %}
-</ul>
-<hr>
 
 
-<form method="post" action="{% url 'create_chat' %}" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="form-group">
-        <button type="submit">Start New Chat</button>
+<div class="d-flex">
+  <div class="d-flex flex-column flex-shrink-0 p-3 bg-light border-end position-sticky" style="width: 260px; height: 100vh; top: 0; overflow-y: hidden;">
+    <a href="/chat" class="text-decoration-none">
+      <div class="mb-3 px-3 py-2 bg-primary bg-opacity-10 rounded text-primary text-center fw-bold fs-5 text-uppercase position-sticky" style="top: 0; z-index: 2; cursor: pointer;">
+        Chats
+      </div>
+    </a>
+
+    
+    <div class="d-flex justify-content-center mb-3">
+      <form style="width: 100%" method="post" action="{% url 'create_chat' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+      <button style="width: 100%" type="submit" class="btn btn-primary">New Chat</button>
+      </div>
+    </form>
     </div>
-</form>
+
+
+    <div class="d-flex flex-column gap-2 scrollbar-hide" style="overflow-y: auto; flex: 1 1 0; min-height: 0;">
+      {% for chat in chats %}
+        <a href="{% url 'chatroom' chat.id %}" class="text-decoration-none">
+          <div class="card {% if chat.id == chat_id %}border-primary{% else %}border-0{% endif %} shadow-sm">
+            <div class="card-body d-flex align-items-center py-2 px-3">
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="fw-semibold {% if chat.id == chat_id %}text-primary{% else %}text-dark{% endif %}">{{ chat.id }}</span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="flex-grow-1 p-3 d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+      {% if request.path == '/chat' %}
+<div class="card mx-auto" style="max-width: 400px;">
+  <div class="card-body text-center">
+    <p class="card-text mb-0">Select or start a new chat</p>
+  </div>
+</div>
+      
+      {% endif %}
+      
+      {% block chatroom %}{% endblock %}
+  </div>
+</div>
 
 {% endblock %}
