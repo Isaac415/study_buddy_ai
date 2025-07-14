@@ -23,5 +23,5 @@ urlpatterns = [
     # Quiz
     path('quiz', views.quiz, name='quiz'),
     path('mc/create', views.create_mc, name="create_mc"),
-    path('quiz/<slug:quiz_id>', views.take_quiz, name="take_quiz"),
+    path('course/<slug:course_id>/quiz/<slug:quiz_id>', views.take_quiz, name="take_quiz"),
 ]

@@ -406,7 +406,7 @@ def generate_quiz(state: Annotated[dict, InjectedState],
     You will get the ID of each question after saving each of them.
     Parameters:
     document_name: str - original_filename of the document
-    name: str - name of the quiz (You will have to create this on your own, unless provided by user)
+    name: str - name of the quiz (You will have to create this on your own, BE CREATIVE!)
     mcq_id_list: List[str] - list of multiple choice question id
     sq_id_list: List[str] - list of short question id
     '''
@@ -434,7 +434,7 @@ def generate_quiz(state: Annotated[dict, InjectedState],
     quiz.save()
 
     tool_message = f'''
-    Successfully created quiz {quiz.name}. Quiz id: {quiz.id}. Please include a hyperlink to /quiz/{quiz.id} in your reply.
+    Successfully created quiz {quiz.name}. Quiz id: {quiz.id}. Please include a hyperlink to course/[the related course id]/quiz/{quiz.id} in your reply.
     '''
     
     return tool_message

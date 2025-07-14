@@ -1,33 +1,134 @@
-{% extends 'base.html' %}
+{% extends 'course.html' %}
 
 {% block title %}Quiz: {{ quiz.name }}{% endblock %}
 
-{% block content %}
-<p>Course: {{ quiz.document.course }}, Document: {{ quiz.document.original_filename }}</p>
-<h5>Multiple Choice Questions</h5>
-<ul>
+{% block course_detail %}
+<a href="/course/{{ this_course.id }}" class="btn btn-secondary mb-3">&larr; Back to Course</a>
+<div class="container mt-4" style="width: 60%">
+  <h2 class="mb-4 text-center">{{ quiz.name }}</h2>
+  <div class="card mb-4 w-100">
+    <div class="card-body text-center d-flex justify-content-center align-items-center gap-4">
+      <p class="mb-0"><strong>Document:</strong> {{ quiz.document }}</p>
+      <p class="mb-0"><strong>Course:</strong> {{ quiz.document.course }}</p>
+    </div>
+  </div>
+  <h4 class="mb-4">Multiple Choice Questions</h4>
+  <div id="mcq-section">
     {% for mcq in quiz.multiple_choice_questions.all %}
-        <p>{{ mcq.question }}</p>
-        <ul>
-            <li>{{ mcq.choice_1 }}</li>
-            <li>{{ mcq.choice_2 }}</li>
-            <li>{{ mcq.choice_3 }}</li>
-            <li>{{ mcq.choice_4 }}</li>
-        </ul>
-        <hr>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Q{{ forloop.counter }}. {{ mcq.question }}</h5>
+          <div class="btn-group-vertical w-100" role="group" aria-label="MCQ Choices">
+            <button type="button" class="btn btn-outline-primary mcq-choice mb-2" data-mcq="{{ forloop.counter0 }}" data-choice="1">{{ mcq.choice_1 }}</button>
+            <button type="button" class="btn btn-outline-primary mcq-choice mb-2" data-mcq="{{ forloop.counter0 }}" data-choice="2">{{ mcq.choice_2 }}</button>
+            <button type="button" class="btn btn-outline-primary mcq-choice mb-2" data-mcq="{{ forloop.counter0 }}" data-choice="3">{{ mcq.choice_3 }}</button>
+            <button type="button" class="btn btn-outline-primary mcq-choice mb-2" data-mcq="{{ forloop.counter0 }}" data-choice="4">{{ mcq.choice_4 }}</button>
+          </div>
+          <div class="mt-3">
+            <div class="alert d-none" id="mcq-feedback-{{ forloop.counter0 }}"></div>
+          </div>
+          <input type="hidden" class="mcq-correct" value="{{ mcq.correct_ans }}">
+        </div>
+      </div>
     {% empty %}
-        <li>No multiple choice question.</li>
+      <div class="alert alert-warning">No multiple choice question.</div>
     {% endfor %}
-</ul>
-<br>
-<h5>Short Questions</h5>
-<ol>
+  </div>
+  <h4 class="mt-5 mb-4">Short Questions</h4>
+  <div id="short-questions-section">
     {% for sq in quiz.short_questions.all %}
-        <li>{{ sq.question }}</li>
-        <hr>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Q{{ forloop.counter }}.</h5>
+          <p class="card-text">{{ sq.question }}</p>
+          <div class="input-group mb-2">
+            <input type="text" class="form-control short-answer-input" placeholder="Type your answer..." data-sq="{{ forloop.counter0 }}">
+            <button type="button" class="btn btn-outline-primary check-short-answer" data-sq="{{ forloop.counter0 }}">Check</button>
+          </div>
+          <div class="mt-2">
+            <div class="alert d-none" id="short-feedback-{{ forloop.counter0 }}"></div>
+          </div>
+          <input type="hidden" class="short-correct" value="{{ sq.correct_ans }}">
+        </div>
+      </div>
     {% empty %}
-        <li>No short question.</li>
+      <div class="alert alert-warning">No short question.</div>
     {% endfor %}
-</ol>
+  </div>
+  <div class="d-flex justify-content-center mt-5 mb-4">
+    <button id="reset-quiz-btn" class="btn btn-outline-primary btn-lg">Reset</button>
+  </div>
+</div>
+{% endblock %}
 
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.mcq-choice').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const mcqIdx = this.getAttribute('data-mcq');
+      const selected = parseInt(this.getAttribute('data-choice'));
+      const card = this.closest('.card');
+      const correct = parseInt(card.querySelector('.mcq-correct').value);
+      const feedback = document.getElementById('mcq-feedback-' + mcqIdx);
+      // Disable all buttons for this MCQ
+      card.querySelectorAll('.mcq-choice').forEach(b => {
+        b.disabled = true;
+        b.classList.remove('btn-success', 'btn-danger', 'active');
+      });
+      if (selected === correct) {
+        this.classList.add('btn-success', 'active');
+        feedback.className = 'alert alert-success mt-2';
+        feedback.textContent = 'Correct!';
+      } else {
+        this.classList.add('btn-danger', 'active');
+        feedback.className = 'alert alert-danger mt-2';
+        feedback.textContent = 'Incorrect. The correct answer was: ' + card.querySelector('.mcq-choice[data-choice="' + correct + '"]').textContent;
+      }
+      feedback.classList.remove('d-none');
+    });
+  });
+
+  // Short question instant feedback
+  document.querySelectorAll('.check-short-answer').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const sqIdx = this.getAttribute('data-sq');
+      const card = this.closest('.card');
+      const input = card.querySelector('.short-answer-input');
+      const feedback = document.getElementById('short-feedback-' + sqIdx);
+      // Disable input and button after checking
+      input.disabled = true;
+      this.disabled = true;
+      feedback.className = 'alert alert-info mt-2';
+      feedback.textContent = 'Sample answer: ' + card.querySelector('.short-correct').value;
+      feedback.classList.remove('d-none');
+    });
+  });
+
+  // Reset button functionality
+  document.getElementById('reset-quiz-btn').addEventListener('click', function() {
+    // Reset MCQs
+    document.querySelectorAll('.card .mcq-choice').forEach(function(btn) {
+      btn.disabled = false;
+      btn.classList.remove('btn-success', 'btn-danger', 'active');
+    });
+    document.querySelectorAll('[id^="mcq-feedback-"]').forEach(function(div) {
+      div.classList.add('d-none');
+      div.textContent = '';
+    });
+    // Reset Short Questions
+    document.querySelectorAll('.short-answer-input').forEach(function(input) {
+      input.disabled = false;
+      input.value = '';
+    });
+    document.querySelectorAll('.check-short-answer').forEach(function(btn) {
+      btn.disabled = false;
+    });
+    document.querySelectorAll('[id^="short-feedback-"]').forEach(function(div) {
+      div.classList.add('d-none');
+      div.textContent = '';
+    });
+  });
+});
+</script>
 {% endblock %}

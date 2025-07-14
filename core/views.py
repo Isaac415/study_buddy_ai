@@ -95,10 +95,14 @@ def course(request):
 def course_detail(request, course_id):
     courses = Course.objects.filter(user=request.user)
     this_course = Course.objects.get(user=request.user, id=course_id)
+    documents = Document.objects.filter(user=request.user, course=this_course)
+    quizzes = Quiz.objects.filter(user=request.user, document__course=this_course)
 
     context = {
         'courses': courses,
         'this_course': this_course,
+        'documents': documents,
+        'quizzes': quizzes,
     }
 
     return render(request, 'course_detail.html', context)
@@ -155,6 +159,7 @@ def upload_document(request):
     if request.method == 'POST':
         description = request.POST['description'].strip()
         course = request.POST['course']
+        this_course_id = request.POST['this_course_id']
         file = request.FILES.get('file')
 
         # Save file to local temp
@@ -203,7 +208,7 @@ def upload_document(request):
         # Delete local temp file
         os.remove(local_file_path)
 
-        return redirect('/document')
+        return redirect(f'/course/{this_course_id}')
 
 '''
 Quiz
@@ -246,9 +251,18 @@ def create_mc(request):
         return redirect('/quiz')
 
 @login_required
-def take_quiz(request, quiz_id):
+def take_quiz(request, course_id, quiz_id):
+    courses = Course.objects.filter(user=request.user)
+    this_course = Course.objects.get(user=request.user, id=course_id)
+    documents = Document.objects.filter(user=request.user, course=this_course)
+    quizzes = Quiz.objects.filter(user=request.user, document__course=this_course)
     quiz = Quiz.objects.get(user=request.user, id=quiz_id)
+    
     context = {
+        'courses': courses,
+        'this_course': this_course,
+        'documents': documents,
+        'quizzes': quizzes,
         'quiz': quiz
     }
 

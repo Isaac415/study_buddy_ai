@@ -2,8 +2,75 @@
 {% block title %}Course: {{ this_course.name }}{% endblock %}
 
 {% block course_detail %}
-<p>Course: {{ this_course.name }}</p>
+<h1 style="text-align: center;">{{ this_course.name }}</h1>
 
 
+<h3>Documents</h3>
+<div class="mb-3"></div>
+<div style="display: flex; flex-wrap: wrap; width: 100%; row-gap: 8px;">
+{% if documents %}
+    {% for doc in documents %}
+        <div class="card mb-2" style="width: 24%; flex: 0 0 24%; box-sizing: border-box; margin-left: 0.5%; margin-right: 0.5%; box-shadow: 0 4px 12px rgba(0,0,0,0.12); height: 250px;">
+            <div class="card-body">
+                <h5 class="card-title">{{ doc.original_filename }}</h5>
+                <p class="card-text">{{ doc.description }}</p>
+            </div>
+            <div class="card-footer text-body-secondary" style="text-align: center;">
+                <small>Uploaded at: {{ doc.created_at|date:'F j, g:i a' }}</small>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+    <!-- Upload Document Form as last card, always visible -->
+    <div class="card mb-2" style="width: 24%; flex: 0 0 24%; box-sizing: border-box; margin-left: 0.5%; margin-right: 0.5%; box-shadow: 0 4px 12px rgba(0,0,0,0.12); display: flex; flex-direction: column; justify-content: stretch; height: 250px;">
+        <div class="card-header">
+          <strong>Upload a Document</strong>
+        </div>
+        <div class="card-body" style="flex: 1 1 auto;">
+          <form method="post" action="{% url 'upload_document' %}" enctype="multipart/form-data" id="uploadDocumentForm">
+            {% csrf_token %}
+            <div class="mb-3">
+              <input type="file" class="form-control" id="file" name="file" required>
+            </div>
+            <input type="hidden" name="course" value="{{ this_course.name }}">
+            <input type="hidden" name="this_course_id" value="{{ this_course.id }}">
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <input type="text" class="form-control" id="description" name="description" required>
+            </div>
+            <div style="text-align: center;">
+              <button type="submit" class="btn btn-primary" id="uploadBtn">Upload</button>
+            </div>
+          </form>
+          <div id="uploadStatus" class="mt-2"></div>
+          <script>
+            document.getElementById('uploadDocumentForm').addEventListener('submit', function() {
+              var btn = document.getElementById('uploadBtn');
+              btn.textContent = "Uploading document...";
+              btn.disabled = true;
+            });
+          </script>
+        </div>
+      </div>
+</div>
+
+<div style="margin-bottom: 2rem;"></div>
+
+<h3>Quizzes</h3>
+<div class="mb-3"></div>
+{% if quizzes %}
+    {% for quiz in quizzes %}
+        <a href="{{ this_course.id }}/quiz/{{ quiz.id }}" style="text-decoration: none; color: inherit;">
+            <div class="card mb-2" style="box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+                <div class="card-body">
+                    <strong>{{ quiz.name }}</strong><br>
+                    <small>Document: {{ quiz.document }}</small>
+                </div>
+            </div>
+        </a>
+    {% endfor %}
+{% else %}
+    <p>No quizzes available.</p>
+{% endif %}
 
 {% endblock %}
